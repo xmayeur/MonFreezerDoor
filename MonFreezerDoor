@@ -1,0 +1,41 @@
+#! /bin/sh
+# /etc/init.d/MonFreezerDoor
+#
+
+### BEGIN INIT INFO
+# Provides:          FreezerAlarm
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: FreezerAlarm
+# Description:       Added 10 March 2017
+### END INIT INFO
+
+# Some things that run always
+touch /var/lock/MonFreezerDoor
+
+# Carry out specific functions when asked to by the system
+case "$1" in
+  start)
+    echo "Starting script"
+    cd /home/pi/MonFreezerDoor
+    /usr/bin/python /home/pi/MonFreezerDoor/MonFreezerDoor.pyc &
+    ;;
+  stop)
+    echo "Stopping script"
+    pkill -9 -f MonFreezerDoor
+    exit 0
+    ;;
+  start)
+    MonFreezerDoor stop
+    sleep 5
+    MonFreezerDoor start
+    ;;
+  *)
+    echo "Usage: /etc/init.d/MonFreezerDoor {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0
