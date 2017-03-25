@@ -1,13 +1,16 @@
-import tdtool
+import ConfigParser
+import logging
+import os
 import sys
 import time
-from smtplib import SMTP, SMTP_SSL
-import ConfigParser
-import Key
-import logging
 from logging.handlers import RotatingFileHandler
+from smtplib import SMTP, SMTP_SSL
+
+import Key
+import tdtool
 from crypto_helpers import AEScipher
-import os
+
+DEV = False
 
 project = 'MonFreezeDoor'
 INI_file = project + '.conf'
@@ -15,11 +18,17 @@ LOG_file = project + '.log'
 FreezerID = 1595686  # freezer door switch dummy device
 BellID = 395273
 
-timeout = 5  # seconds
-timeout2 = 300
+if DEV:
+    timeout = 5  # seconds
+    timeout2 = 60
+else:
+    timeout = 30  # seconds
+    timeout2 = 300
+
 tdtool.init(INI_file)
 # Initialize cipher object to decrypt password
 aes = AEScipher(Key.key)
+
 
 def open_log(name):
     # Setup the log handlers to stdout and file.
@@ -35,7 +44,7 @@ def open_log(name):
     handler_file = RotatingFileHandler(
         LOG_file,
         mode='a',
-        maxBytes=200000,
+        maxBytes=500000,
         backupCount=9,
         encoding='UTF-8',
         delay=True
@@ -139,29 +148,53 @@ def send_mail(address, subject, content):
         conn.sendmail(SENDER, address, msg)
         conn.close()
 
-    except Exception:
-        log.critical('Couldn''t send mail: %s' % subject)
+    except Exception, e:
+        log.critical('Couldn''t send mail: %s - error %s' % (subject, e))
 
 
 def main():
     while True:
         try:
             state = tdtool.getDeviceState(deviceID=FreezerID)
+            if state != 'OFF':
+                log.info('state: %s' % state)
         except Exception, e:
-            print 'Error %s' % e
+            print 'Telldus - Error %s' % e
             sys.exit(1)
+
         if state == 'ON':
             sincetime = time.strftime("%d/%m/%Y - %H:%M")
             time.sleep(timeout)
-            while tdtool.getDeviceState(deviceID=FreezerID) == 'ON':
-                alarm = 'Alarm: Freezer door is opened since %s ' % sincetime
-                send_mail('xavier@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
-                send_mail('joelle@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
-                log.critical(alarm)
-                tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNON)
-                tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNOFF)
-                time.sleep(timeout2)
-            log.warning('Freezer door was finally closed at %s' % time.strftime("%d/%m/%Y - %H:%M"))
+            try:
+                state = tdtool.getDeviceState(deviceID=FreezerID)
+                if state != 'OFF':
+                    log.info('state: %s' % state)
+
+                while state == 'ON':
+                    alarm = 'Alarm: Freezer door is opened since %s ' % sincetime
+                    send_mail('xavier@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
+                    log.critical(alarm)
+
+                    if not DEV:
+                        send_mail('joelle@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
+                        tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNON)
+                        tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNOFF)
+
+                    time.sleep(timeout2)
+                    try:
+                        state = tdtool.getDeviceState(deviceID=FreezerID)
+                    except Exception, e:
+                        log.warning('Telldus - Error %s' % e)
+
+                    if state != 'OFF':
+                        log.info('state: %s' % state)
+
+                if state == 'OFF':
+                    log.warning('Freezer door was finally closed at %s' % time.strftime("%d/%m/%Y - %H:%M"))
+
+            except Exception, e:
+                log.warning('Telldus - Error %s' % e)
+
         else:
             time.sleep(timeout)
 
