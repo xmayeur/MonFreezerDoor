@@ -10,22 +10,14 @@ import Key
 import tdtool
 from crypto_helpers import AEScipher
 
-DEV = False
-
+# Global variables
 project = 'MonFreezeDoor'
 INI_file = project + '.conf'
 LOG_file = project + '.log'
 FreezerID = 1595686  # freezer door switch dummy device
 BellID = 395273
+DEV = True
 
-if DEV:
-    timeout = 5  # seconds
-    timeout2 = 60
-else:
-    timeout = 30  # seconds
-    timeout2 = 300
-
-tdtool.init(INI_file)
 # Initialize cipher object to decrypt password
 aes = AEScipher(Key.key)
 
@@ -72,7 +64,6 @@ def open_config(f):
     if config_ is None:
         log_.critical('configuration file is missing')
     return config_
-# Open config file
 config = open_config(INI_file)
 
 
@@ -153,14 +144,24 @@ def send_mail(address, subject, content):
 
 
 def main():
+    tdtool.init(INI_file)
+
     while True:
+        DEV = config.get('Freezer', 'DEV')
+        if DEV:
+            timeout = 5  # seconds
+            timeout2 = 60
+        else:
+            timeout = config.get('Freezer', 'timeout')  # seconds
+            timeout2 = config.get('Freezer', 'timeout2')
+        state = None
+
         try:
             state = tdtool.getDeviceState(deviceID=FreezerID)
             if state != 'OFF':
                 log.info('state: %s' % state)
         except Exception, e:
             print 'Telldus - Error %s' % e
-            sys.exit(1)
 
         if state == 'ON':
             sincetime = time.strftime("%d/%m/%Y - %H:%M")
