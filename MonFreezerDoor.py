@@ -16,7 +16,7 @@ INI_file = project + '.conf'
 LOG_file = project + '.log'
 FreezerID = 1595686  # freezer door switch dummy device
 BellID = 395273
-DEV = True
+
 
 # Initialize cipher object to decrypt password
 aes = AEScipher(Key.key)
@@ -144,16 +144,24 @@ def send_mail(address, subject, content):
 
 
 def main():
+    bDeb = False
     tdtool.init(INI_file)
 
     while True:
-        DEV = config.get('Freezer', 'DEV')
-        if DEV:
+        old_bDeb = bDeb
+        bDeb = config.get('Freezer', 'DEV')
+
+        if bDeb:
             timeout = 5  # seconds
             timeout2 = 60
+            if old_bDeb != bDeb:
+                log.info('Now in Debug mode')
         else:
             timeout = config.get('Freezer', 'timeout')  # seconds
             timeout2 = config.get('Freezer', 'timeout2')
+            if old_bDeb != bDeb:
+                log.info('Now in Normal mode')
+
         state = None
 
         try:
@@ -176,7 +184,7 @@ def main():
                     send_mail('xavier@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
                     log.critical(alarm)
 
-                    if not DEV:
+                    if not bDeb:
                         send_mail('joelle@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
                         tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNON)
                         tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNOFF)
