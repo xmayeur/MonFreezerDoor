@@ -6,7 +6,6 @@ import time
 from logging.handlers import RotatingFileHandler
 from smtplib import SMTP, SMTP_SSL
 
-import Key
 import tdtool
 from crypto_helpers import AEScipher
 
@@ -19,7 +18,7 @@ BellID = 395273
 
 
 # Initialize cipher object to decrypt password
-aes = AEScipher(Key.key)
+aes = AEScipher("Mon chien s'appelle Lobo")
 
 
 def open_log(name):
@@ -149,16 +148,17 @@ def main():
 
     while True:
         old_bDeb = bDeb
+        config.read(INI_file)
         bDeb = config.get('Freezer', 'DEV')
 
-        if bDeb:
+        if bDeb == 'True':
             timeout = 5  # seconds
             timeout2 = 60
             if old_bDeb != bDeb:
                 log.info('Now in Debug mode')
         else:
-            timeout = config.get('Freezer', 'timeout')  # seconds
-            timeout2 = config.get('Freezer', 'timeout2')
+            timeout = int(config.get('Freezer', 'timeout'))  # seconds
+            timeout2 = int(config.get('Freezer', 'timeout2'))
             if old_bDeb != bDeb:
                 log.info('Now in Normal mode')
 
