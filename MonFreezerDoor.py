@@ -17,10 +17,6 @@ FreezerID = 1595686  # freezer door switch dummy device
 BellID = 395273
 
 
-# Initialize cipher object to decrypt password
-aes = AEScipher("Mon chien s'appelle Lobo")
-
-
 def open_log(name):
     # Setup the log handlers to stdout and file.
     log_ = logging.getLogger(name)
@@ -64,6 +60,8 @@ def open_config(f):
         log_.critical('configuration file is missing')
     return config_
 config = open_config(INI_file)
+# Initialize cipher object to decrypt password
+aes = AEScipher("Mon chien s'appelle Lobo")
 
 
 def send_mail(address, subject, content):
@@ -181,13 +179,12 @@ def main():
 
                 while state == 'ON':
                     alarm = 'Alarm: Freezer door is opened since %s ' % sincetime
-                    send_mail('xavier@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
                     log.critical(alarm)
-
                     if not bDeb:
-                        send_mail('joelle@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
                         tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNON)
                         tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNOFF)
+                        send_mail('joelle@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
+                    send_mail('xavier@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
 
                     time.sleep(timeout2)
                     try:
