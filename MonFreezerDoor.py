@@ -180,7 +180,7 @@ def main():
                 while state == 'ON':
                     alarm = 'Alarm: Freezer door is opened since %s ' % sincetime
                     log.critical(alarm)
-                    if not bDeb:
+                    if bDeb != 'True':
                         tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNON)
                         tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNOFF)
                         send_mail('joelle@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
