@@ -4,7 +4,7 @@ git pull
 docker rm -f monfreezer
 docker build -t monfreezer . && \
 docker tag monfreezer xmayeur/monfreezer && \
-exec ./monfreezer.sh
+/bin/sh ./monfreezer.sh
 
 #docker push xmayeur/monfreezer && \
 

@@ -17,20 +17,6 @@ FreezerID = 1595686  # freezer door switch dummy device
 BellID = 395273
 
 
-def get_vault(uid):
-    url = config.get('vault', 'vault_url')
-    r = requests.get(url=url + '?uid=%s' % uid)
-    id = r.json()
-    r.close()
-    if id['status'] == 200:
-        _username = id['username']
-        _password = id['password']
-    else:
-        _username = ''
-        _password = ''
-    return _username, _password
-
-
 def open_log(name):
     # Setup the log handlers to stdout and file.
     log_ = logging.getLogger(name)
@@ -75,6 +61,20 @@ def open_config(f):
 
 
 config = open_config(INI_file)
+
+
+def get_vault(uid):
+    url = config.get('vault', 'vault_url')
+    r = requests.get(url=url + '?uid=%s' % uid)
+    id = r.json()
+    r.close()
+    if id['status'] == 200:
+        _username = id['username']
+        _password = id['password']
+    else:
+        _username = ''
+        _password = ''
+    return _username, _password
 
 
 def send_mail(address, subject, content):
