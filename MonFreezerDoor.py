@@ -1,6 +1,5 @@
 import ConfigParser
 import logging
-import os
 import sys
 import time
 from logging.handlers import RotatingFileHandler
@@ -64,15 +63,13 @@ def open_config(f):
     log_ = open_log(project + '.open_config')
     # Read config file - halt script on failure
     config_ = None
-    for loc in os.curdir, os.path.expanduser('~').join('.' + project), os.path.expanduser('~'), \
-               '/etc/' + project, os.environ.get(project + '_CONF'):
-        try:
-            with open(os.path.join(loc, f), 'r+') as config_file:
-                config_ = ConfigParser.SafeConfigParser()
-                config_.readfp(config_file)
-                break
-        except IOError:
-            pass
+    try:
+        with open(f, 'r+') as config_file:
+            config_ = ConfigParser.SafeConfigParser()
+            config_.readfp(config_file)
+            break
+    except IOError:
+        pass
     if config_ is None:
         log_.critical('configuration file is missing')
     return config_
