@@ -67,7 +67,6 @@ def open_config(f):
         with open(f, 'r+') as config_file:
             config_ = ConfigParser.SafeConfigParser()
             config_.readfp(config_file)
-            break
     except IOError:
         pass
     if config_ is None:
