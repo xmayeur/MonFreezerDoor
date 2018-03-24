@@ -1,7 +1,7 @@
-import os.path
 from py_compile import compile
 from time import sleep
 
+import os.path
 from fabric.api import *
 
 # from fabric.contrib.project import rsync_project as rsync
@@ -14,7 +14,7 @@ env.use_ssh_config = True
 # Deploy files
 project = 'MonFreezerDoor'
 config = project + '.conf'
-deploy_list = ['MonFreezerDoor.py', ]
+deploy_list = ['MonFreezerDoor.py', 'MonFreezeDoor.conf']
 
 for f in deploy_list:
     if f.find('.py') > 0:

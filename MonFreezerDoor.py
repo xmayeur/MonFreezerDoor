@@ -6,8 +6,9 @@ import time
 from logging.handlers import RotatingFileHandler
 from smtplib import SMTP, SMTP_SSL
 
+import requests
+
 import tdtool
-from crypto_helpers import AEScipher
 
 # Global variables
 project = 'MonFreezeDoor'
@@ -15,6 +16,20 @@ INI_file = project + '.conf'
 LOG_file = project + '.log'
 FreezerID = 1595686  # freezer door switch dummy device
 BellID = 395273
+
+
+def get_vault(uid):
+    url = config.get('vault', 'vault_url')
+    r = requests.get(url=url + '?uid=%s' % uid)
+    id = r.json()
+    r.close()
+    if id['status'] == 200:
+        _username = id['username']
+        _password = id['password']
+    else:
+        _username = ''
+        _password = ''
+    return _username, _password
 
 
 def open_log(name):
@@ -40,6 +55,8 @@ def open_log(name):
     handler_file.setFormatter(formatter)
     log_.addHandler(handler_file)
     return log_
+
+
 log = open_log(project)
 
 
@@ -59,9 +76,9 @@ def open_config(f):
     if config_ is None:
         log_.critical('configuration file is missing')
     return config_
+
+
 config = open_config(INI_file)
-# Initialize cipher object to decrypt password
-aes = AEScipher("Mon chien s'appelle Lobo")
 
 
 def send_mail(address, subject, content):
@@ -93,18 +110,19 @@ def send_mail(address, subject, content):
     except ConfigParser.NoOptionError:
         log.critical('no "sender" option in configuration')
         return
-    # retrieve the USERNAME
-    try:
-        USERNAME = config.get('smtp', 'username')
-    except ConfigParser.NoOptionError:
-        log.critical('no "username" option in configuration')
-        return
-
+    # retrieve the USERNAME & PASSWORD
     # retrieve the PASSWORD
     try:
-        PASSWORD = config.get('smtp', 'password')
+        uid = config.get('smtp', 'uid')
     except ConfigParser.NoOptionError:
-        log.critical('no "password" option in configuration')
+        log.critical('no uid option in configuration')
+        return
+
+    try:
+        USERNAME, PASSWORD = get_vault(uid)
+
+    except ConfigParser.NoOptionError:
+        log.critical('Cannot retrieve user name from vault')
         return
 
     # retrieve the ssl flag
@@ -114,7 +132,7 @@ def send_mail(address, subject, content):
         SSL = False
 
     try:
-        if SSL:
+        if SSL == 'True':
             conn = SMTP_SSL(HOST, PORT)
             conn.ehlo()
         else:
@@ -125,7 +143,7 @@ def send_mail(address, subject, content):
             conn.ehlo()
 
         conn.set_debuglevel(False)
-        conn.login(USERNAME, aes.decrypt(PASSWORD))
+        conn.login(USERNAME, PASSWORD)
 
         msg = "\r\n".join([
             "From: %s" % SENDER,
@@ -142,7 +160,6 @@ def send_mail(address, subject, content):
 
 def main():
     bDeb = False
-    tdtool.init(INI_file)
 
     while True:
         old_bDeb = bDeb
@@ -180,10 +197,10 @@ def main():
                 while state == 'ON':
                     alarm = 'Alarm: Freezer door is opened since %s ' % sincetime
                     log.critical(alarm)
-                    if bDeb != 'True':
-                        tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNON)
-                        tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNOFF)
-                        send_mail('joelle@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
+                    # if bDeb != 'True':
+                    #     tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNON)
+                    #     tdtool.doMethod(BellID, tdtool.TELLSTICK_TURNOFF)
+                    #     send_mail('joelle@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
                     send_mail('xavier@mayeur.be', 'Alarme Surgelateur - Porte ouverte', alarm)
 
                     time.sleep(timeout2)
