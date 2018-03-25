@@ -1,5 +1,6 @@
 import ConfigParser
 import logging
+import os
 import sys
 import time
 from logging.handlers import RotatingFileHandler
@@ -12,7 +13,11 @@ import tdtool
 # Global variables
 project = 'MonFreezeDoor'
 INI_file = project + '.conf'
-LOG_file = project + '.log'
+if os.name == 'nt':
+    LOG_file = project + '.log'
+else:
+    LOG_file = '/var/log/' + project + '.log'
+    
 FreezerID = 1595686  # freezer door switch dummy device
 BellID = 395273
 
