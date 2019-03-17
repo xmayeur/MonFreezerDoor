@@ -1,0 +1,43 @@
+language: python
+python:
+  - '3.6'
+sudo: required
+services:
+  - docker
+
+script:
+
+  - |-
+    if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+      # TAG=$(grep "ENV MYSQL_VERSION" Dockerfile | awk 'NF>1{print $NF}')
+      docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      docker build -t monfreezer .
+      docker tag monfreezer xmayeur/monfreezer
+      docker push xmayeur/monfreezer
+    fi
+
+addons:
+  ssh_known_hosts: home.mayeur.be
+
+
+# https://github.com/dwyl/learn-travis/blob/master/encrypted-ssh-keys-deployment.md
+# See https://oncletom.io/2016/travis-ssh-deploy/
+
+
+# before_deploy:
+# - openssl aes-256-cbc -K $encrypted_9ddbacb801a6_key -iv $encrypted_9ddbacb801a6_iv
+#   -in deploy_rsa.enc -out /tmp/deploy_rsa -d
+# - eval "$(ssh-agent -s)"
+# - chmod 600 /tmp/deploy_rsa
+# - ssh-add /tmp/deploy_rsa
+
+# deploy:
+#  provider: script
+#  skip_cleanup: true
+#  script: ssh -o "StrictHostKeyChecking no" -t root@home.mayeur.be -p 2202 /root/monfreezer.sh
+
+env:
+  global:
+    - secure: "j77MZzDlqjKXOjUEybu3tgDRlERxQEsQVo0BX7T58QDkBZ8m+OdcccexTEfzy2iOPMriVUb3eM8t5cSbhQQ3A+jB2c32nEvSlppdte22sk8LKviSUIejII3R+dzucamePPfrEGEVxuxBf9ZS9y9QDd4vkwXU6/pvKNFoi8P8Jp0dF/Pz92FTKtuenK29LSN9CjholXpyMqMoGIN8zmZTE7IaUgz6AZ6GwxZwLAzjwsTClV8K5pPlLSffL1vNMVmfys37S+Icc6htifM6ntjZypTUo0c69EuOxOS7qIg8Y6aS4K98CUDqDg3LhPWSR+dO8NvAaj1c23oo+cC9sVfPuM6U2d2F5G9Xkzsqhl/5FzI7mSsTZZIcpZTYEQVIUkPNO+X9KZormMXll4FyYVG0rucOXJMFn6oxPINeodxGCY1YBXeSFoKbVMaqS04xBvtBIm8apPtOqgygkTiTca8F7FexagFZl63hcfKH3HbvIib6HWaguxYUHT4YBkW7PTPpD+2pC/9qcGFzXBXNyCW7DLCI0QD/UqKLdxIdM5DduOCoGwJ1sol3Azy5s6KT/Z+WkmbhsX+7VPNwmn4ruz511kzVYVhdyQf4BT4yPc93AZymrxafGzaFmgvYVsdQyHczvTUXIeWtInHU8bWu5/4EIMz+vOcqBeDZh6ZCWlnyuJA="
+    - secure: "XD7RsFNGH3xpGVWDv74fcmdkqzE2YY77ftn6Cua6z8H3VnLyTdwoqGUmqD59Tw64El0x+HQd9x+KZ86FRvU+q7+pyTot7NMxi8dI4Oc6fd9isMtDBRK1M8iRXMjmuaLESYlWiuv2y4mLdleW1U4wVJndsrBJISBNLyhABnw7qxdcLFlBMhCOXdugeNTXXKUkzykIYcVjsN9JAIy2+858TBgYwcIjthOHJZXpHmBQ9iiUX9u0WaY+d2qREjKfDpX8Z8Ge6lNAPzw57+waBD/rinyOu6kJZR/zXAZYGqAqZKA75qC0YXMaXBr7mu/wpQQor1nJNN2N7xIE2lrazFBWYnUgXcWAN4V8BDgWzr2HMgMV0UEkOlDOwSMLOUwhLHW/U5si3bm2szpPx58lOHBWO7NCw7ITuC6kUowV5weeZspJmMpLXa6MfRUH5UgawG9lk+q+1jb0KWisIj9TaL4Cul7ZFIHji3PiUrVHkE2J0Fo9k5oa8v65UsfsmIY3hycO1YL4g3pEYhjochnlpkeGXvsC4ly+0Ald0d0tYFABXmXKON9Yo+2u1gnjxDTfQpQ/ts0q4DEsqcUzw5L2WYccX8kaggCP4ZWyNv7alLjON1jTmxMhXJenoyafgwe/X/ftTLuMYjqmThpY2SOvtnGGGmvt4DfUly9MOiFh4UODK8M="
